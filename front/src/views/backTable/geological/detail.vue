@@ -1,13 +1,14 @@
 <template>
   <div>
-    <el-form ref="form" :model="form" label-width="80px">
+    <el-form ref="form" :model="form" label-width="150px">
       <el-form-item label="灾害类型">
-        <el-select v-model="form.type" placeholder="请选择灾害类型">
-          <el-option :disabled="dialogType==='info'" v-for="item in geologicalTypes" :key="item.value" :label="item.label" :value="item.value"/>
+        <el-select v-model="form.type" :disabled="dialogType==='info'" placeholder="请选择灾害类型">
+          <el-option v-for="item in geologicalTypes" :key="item.value" :label="item.label" :value="item.value"/>
         </el-select>
       </el-form-item>
       <el-form-item label="灾害地点">
         <el-cascader
+          width="400px"
           :disabled="dialogType==='info'"
           v-model="form.regions"
           size="large"
@@ -38,6 +39,12 @@
           <el-option v-for="item in severitys" :key="item.value" :label="item.label" :value="item.value"/>
         </el-select>
       </el-form-item>
+      <el-form-item label="伤亡人数（人）">
+        <el-input v-model.number="form.people" :disabled="dialogType==='info'" type="number" placeholder="请输入伤亡人数"/>
+      </el-form-item>
+      <el-form-item label="损失资金（元）">
+        <el-input v-model.number="form.money" :disabled="dialogType==='info'" type="number" placeholder="请输入损失的资金"/>
+      </el-form-item>
       <el-form-item label="位置预览" />
       <mc-gis v-if="form.longitude && form.latitude" :m-width="700" :m-height="400" :tdt-base-map="tdtProp">
         <mc-point :point="point" :icon="icon" />
@@ -49,6 +56,7 @@
 <script>
 // eslint-disable-next-line
 import { regionData, CodeToText } from 'element-china-area-data'
+import { getGeologicalById } from '@/api/geological'
 
 export default {
   name: 'Detail',
@@ -72,11 +80,14 @@ export default {
         mapType: 'img_c'
       },
       form: {
-        regions: ['370000', '371500', '371521'],
+        regions: [],
         date: '',
-        longitude: 114.422364,
-        latitude: 40.671274,
-        type: []
+        longitude: null,
+        latitude: null,
+        type: [],
+        severity: "",
+        people: null,
+        money: null
       },
       geologicalTypes: [ // 灾害类型
         {
@@ -140,7 +151,6 @@ export default {
     }
   },
   created() {
-    this.getDetail()
   },
   methods: {
     resetForm() {
@@ -149,17 +159,33 @@ export default {
       this.form.longitude = null
       this.form.latitude = null
       this.form.type = []
-    },
-    getDetail() {
-      this.$http.get('/api/geological/' + this.geologicalId).then(res => {
-        this.detail = res.data
-      })
+      this.form.people = null
+      this.form.money = null
     },
     handleChange() {
       var loc = ''
       for (let i = 0; i < this.form.regions.length; i++) {
         loc += CodeToText[this.form.regions[i]]
       }
+      // alert(loc)
+    },
+    getDetail(id){
+      const parm = {
+        geologicalId: id
+      }
+      getGeologicalById(parm).then(res => {
+        this.form.regions = [];
+        this.form.regions.push(res.data.address.slice(0, 2)+'0000')
+        this.form.regions.push(res.data.address.slice(0, 4)+'00')
+        this.form.regions.push(res.data.address)
+        this.form.date = res.data.date
+        this.form.longitude = res.data.lnglat.split(',')[0]
+        this.form.latitude = res.data.lnglat.split(',')[1]
+        this.form.type = res.data.type
+        this.form.severity = res.data.severity
+        this.form.people = res.data.people
+        this.form.money = res.data.money
+      })
     },
     // 保存
     onSubmit() {

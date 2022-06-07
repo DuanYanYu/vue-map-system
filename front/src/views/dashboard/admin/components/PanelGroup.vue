@@ -7,9 +7,9 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            New Visits
+            地质灾害总数
           </div>
-          <count-to :start-val="0" :end-val="102400" :duration="2600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="statisticData.count" :duration="2600" suffix="处" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -20,35 +20,35 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            Messages
+            {{statistics.growthRate > 0? '灾害增长率' : '灾害减少率'}}
           </div>
-          <count-to :start-val="0" :end-val="81212" :duration="3000" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="statisticData.growthRate" :decimals="2" suffix="%" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
     <el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('purchases')">
-        <div class="card-panel-icon-wrapper icon-money">
-          <svg-icon icon-class="money" class-name="card-panel-icon" />
+        <div class="card-panel-icon-wrapper icon-people">
+          <svg-icon icon-class="peoples" class-name="card-panel-icon" />
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            Purchases
+            人员伤亡
           </div>
-          <count-to :start-val="0" :end-val="9280" :duration="3200" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="statisticData.people" suffix="人" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
     <el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('shoppings')">
-        <div class="card-panel-icon-wrapper icon-shopping">
-          <svg-icon icon-class="shopping" class-name="card-panel-icon" />
+        <div class="card-panel-icon-wrapper icon-money">
+          <svg-icon icon-class="money" class-name="card-panel-icon" />
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            Shoppings
+            资金损失
           </div>
-          <count-to :start-val="0" :end-val="13600" :duration="3600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="statisticData.money" :decimals="2" suffix="亿元" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -57,12 +57,41 @@
 
 <script>
 import CountTo from 'vue-count-to'
+import { getGeologicalHazardStatistics } from "@/api/echarts";
 
 export default {
   components: {
     CountTo
   },
+  data(){
+    return {
+      statistics: {
+        count: 102400,
+        growthRate: 3.74,
+        people: 19.6,
+        money: 21.73,
+      }
+    }
+  },
+  computed:{
+    statisticData(){
+      return {
+        count: this.statistics.count,
+        growthRate: Math.abs(this.statistics.growthRate),
+        people: this.statistics.people,
+        money: this.statistics.money/100000000,
+      }
+    }
+  },
+  created(){
+    this.initData()
+  },
   methods: {
+    initData(){
+      getGeologicalHazardStatistics().then(res => {
+        this.statistics = res.data;
+      })
+    },
     handleSetLineChartData(type) {
       this.$emit('handleSetLineChartData', type)
     }

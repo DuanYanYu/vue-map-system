@@ -1,5 +1,5 @@
 module.exports = {
-  title: '地图组件测试演示系统',
+  title: '全国地质灾害信息管理系统',
 
   /**
    * @type {boolean} true | false
